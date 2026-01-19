@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  docling:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: docling-remote
+    ports:
+      - "9000:9000"
+    environment:
+      - USE_LOCAL_VLM=false
+      - TRANSFORMERS_CACHE=/app/cache/transformers
+      - HF_HOME=/app/cache/huggingface
+      # LLM Configuration (from Partner Foundry setup)
+      - VISION_API_URL=http://host.docker.internal:8080/v1/chat/completions
+      - VISION_API_KEY=sk-change-me
+      - VISION_MODEL_NAME=gemma3:27b
+    volumes:
+      - docling-cache:/app/cache
+      - ./logs:/app/logs
+      - ./input:/app/input
+      - ./output:/app/output
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+volumes:
+  docling-cache:
+    driver: local
